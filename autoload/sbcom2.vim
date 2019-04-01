@@ -76,26 +76,44 @@ fun! sbcom2#find() " 主函数
   endif
   let regular = sbcom2#insert(theword) " 正则表达式
   "==获取全文==
-  let linetotal = len(getline(1, 2000))
+  let linelen = len(getline(1, 2000))
   let i = 1
   let g:sbcom2_alltext = ""
-  while (i <= linetotal)
-    let g:sbcom2_alltext = g:sbcom2_alltext . getline(i)
+  while (i <= linelen)
+    let g:sbcom2_alltext = g:sbcom2_alltext . getline(i) . " "
     let i += 1
   endwhile
   "==分割单词==
   let wordtemp = ""
-  let g:sbcom2_allword = []
-  for i in g:sbcom2_alltext
-    if (sbcom2#exist(i, g:sbcom2_isword) == 1)
-      let wordtemp = wordtemp . i
-    else
-      if (match(wordtemp, regular) != -1)
-        let g:sbcom2_matched += [wordtemp]
+  let g:sbcom2_matched = []
+  let textlen = len(g:sbcom2_alltext)
+  let rightspell = 0
+  let i = 0
+  while (i < textlen)
+    let thechar = g:sbcom2_alltext[i]
+    if (sbcom2#match(thechar, g:sbcom2_isword) == 1) " 是单词
+      let wordtemp = wordtemp . thechar
+    else " 非单词
+      if (sbcom2#exist(wordtemp, g:sbcom2_matched) == 1) " 已经存在
+        let wordtemp = ""
+        continue " 跳过
+      endif
+      if (match(wordtemp, regular) != 0) " 匹配成功
+        if (wordtemp == theword) " 等于当前单词
+          if (rightspell == 0) " 第一次匹配
+            let rightspell = 1 " 进行标记
+          else " 该单词是正确的单词
+            let g:sbcom2_matched += [wordtemp]
+          endif
+        else " 非当前单词
+          let g:sbcom2_matched += [wordtemp]
+        endif
       endif
       let wordtemp = ""
     endif
-  endfor
+    let i += 1
+  endwhile
+  return []
 endfun
 
 fun! sbcom2#replace(thelen, thetail)
