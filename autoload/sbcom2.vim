@@ -107,7 +107,10 @@ fun! sbcom2#find() " 主函数
         if (sbcom2#exist(wordtemp, g:sbcom2_matched) == 1) " 已经存在
           continue " 跳过
         endif
-        if (match(wordtemp, regular) != 0) " 头部匹配成功
+        if (wordtemp == "") " 单词为空
+          continue " 跳过
+        endif
+        if (match(wordtemp, regular) == 0) " 头部匹配成功
           if (wordtemp == theword) " 等于当前单词
             if (rightspell == 0) " 第一次匹配
               let rightspell = 1 " 进行标记
