@@ -111,10 +111,12 @@ fun! sbcom2#match()
       let wordtemp = wordtemp . thechar
     else " 非单词字符,清空单词
       if ((match(wordtemp, g:sbcom2_regular) == 0)&&(sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)) " 匹配成功且不重复
-        if (wordtemp != g:sbcom2_theword) " 非当前单词,或拼写正确
+        if ((wordtemp != g:sbcom2_origin)||(g:sbcom2_spell == 1)) " 非当前单词,或拼写正确
           let g:sbcom2_matched += [wordtemp]
           let g:sbcom2_wordnth += 1
           return 1
+        else
+          let g:sbcom2_spell = 1
         endif
       elseif ((sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)&&(g:sbcom2_linenum <= 300)) " 暂未匹配成功且不重复
         let canfix = 1
@@ -151,10 +153,11 @@ fun! sbcom2#reset()
   let g:sbcom2_linenum = len(getline(0, 10000))
   let g:sbcom2_matched = []
   let g:sbcom2_fixed = []
-  " let g:sbcom2_spell = 0 " 判断当前单词是否有效
+  let g:sbcom2_spell = 0 " 判断当前单词是否有效
   let g:sbcom2_wordnth = -1 " 下一个切换的单词
   let g:sbcom2_wordnum = 0 " 总共匹配数
   let g:sbcom2_switch = 0 " 全文是否搜遍
   let g:sbcom2_loaded = 0 " 是否搜到头
+  let g:sbcom2_origin = g:sbcom2_theword " 最初的单词
 endfun
 
