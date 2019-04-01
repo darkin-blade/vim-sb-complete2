@@ -1,30 +1,3 @@
-" 全文
-" let g:sbcom2_alltext = []
-" 全部匹配的单词
-let g:sbcom2_matched = []
-" 临时修正的单词
-" let g:sbcom2_fixed = []
-" 算进单词的部分,不包括中文字符
-" let g:sbcom2_isword = []
-" 不算进单词的部分
-" let g:sbcom2_issplit = []
-" 下一个切换的单词
-let g:sbcom2_wordnth = 0
-" 总共匹配数
-let g:sbcom2_wordnum = 0
-" 判断当前单词是否有效
-" let g:sbcom2_spell = 0 
-" 判断是否能够进行正常匹配
-" let g:sbcom2_canmatch = 0 
-" 判断是否已经进行超前匹配
-" let g:sbcom2_hasmatch = 0 
-" 实时位置
-" let g:sbcom2_position = 0
-" 是否正在搜索
-let g:sbcom2_loading = 0
-" 全文是否搜遍
-let g:sbcom2_loaded = 0
-
 fun! sbcom2#init()
   if (&filetype == "vim") " 特判vim格式,把#算进单词
     let g:sbcom2_isword = "[0-9a-zA-Z:_#]"
@@ -111,11 +84,13 @@ fun! sbcom2#add()
       let g:sbcom2_loaded = 1 " 全文加载完毕
     endif
   endwhile
+  let g:sbcom2_switch = 1 " 开启轮换
+  return 0
 endfun
 
 fun! sbcom2#match()
   let wordtemp = ""
-  let textlen = len(g:sbcom2_alltext)
+  let textlen = len(g:sbcom2_alltext) " 刷新长度
   while (g:sbcom2_position < textlen)
     let thechar = g:sbcom2_alltext[g:sbcom2_position] " 按字符匹配
     if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
@@ -147,7 +122,7 @@ fun! sbcom2#match()
     endif
     let g:sbcom2_position += 1
   endwhile
-  return 0
+  return 0 " 没有找到匹配
 endfun
 
 fun! sbcom2#replace()
@@ -163,4 +138,8 @@ fun! sbcom2#reset()
   let g:sbcom2_matched = []
   let g:sbcom2_fixed = []
   let g:sbcom2_spell = 0 " 判断当前单词是否有效
+  let g:sbcom2_wordnth = 0 " 下一个切换的单词
+  let g:sbcom2_wordnum = 0 " 总共匹配数
+  let g:sbcom2_switch = 0 " 全文是否搜遍
+  let g:sbcom2_loaded = 0 " 是否搜到头
 endfun
