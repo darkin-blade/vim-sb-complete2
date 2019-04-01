@@ -152,6 +152,7 @@ fun! sbcom2#find() " 主函数
     call sbcom2#fix(theword, thelen, thetail)
   else
     call sbcom2#replace(thelen, thetail)
+  endif
   return []
 endfun
 

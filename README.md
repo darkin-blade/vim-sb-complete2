@@ -4,14 +4,7 @@ the most lightweight(SHA BI) completion plug of vim
 
 ## Description
 
-![](demo/demo1.gif)
-
-- complete the words behind/in words
-- fix wrong spelling
-
-![](demo/demo2.gif)
-
-- support for words next to CJK
+- the same as `vim-sb-complete1`
 
 ## Installation
 
