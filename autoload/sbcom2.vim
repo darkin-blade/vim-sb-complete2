@@ -76,13 +76,15 @@ fun! sbcom2#find() " 主函数
     echom "invalid --sbcom2"
     return []
   endif
+  "==实时加载==
   if (len(g:sbcom2_theword) == 0) " 新的单词
     call sbcom2#reset()
     call sbcom2#add()
   elseif (g:sbcom2_theword == g:sbcom2_matched[g:sbcom2_wordnth]) " 上一个单词
-    call sbcom2#reset()
     call sbcom2#add()
   else " 不同的单词
+    call sbcom2#reset()
+    call sbcom2#add()
   endif
   "==判断是否开启更正模式==
   if (len(g:sbcom2_matched) == 0)
@@ -101,12 +103,12 @@ fun! sbcom2#add()
       let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_down)
       let g:sbcom2_down += 1
     endif
-    if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
-      let g:sbcom2_loaded = 1 " 全文加载完毕
-    endif
     if (sbcom2#match() == 1)
       call sbcom2#replace() " 一旦找到匹配或者搜索完成就进行补全
-      break
+      return 1
+    endif
+    if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
+      let g:sbcom2_loaded = 1 " 全文加载完毕
     endif
   endwhile
 endfun
@@ -155,7 +157,6 @@ endfun
 
 fun! sbcom2#reset()
   let g:sbcom2_regular = sbcom2#regular(g:sbcom2_theword) " 正则表达式
-  let g:sbcom2_loading = 1
   let g:sbcom2_up = line(".")
   let g:sbcom2_down = line(".") + 1
   let g:sbcom2_linenum = len(getline(0, 10000))
