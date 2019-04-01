@@ -15,10 +15,12 @@ the most lightweight(SHA BI) completion plug of vim
     1. `vim-sb-complete1`
 
     ![](demo/demo1.gif)
+    ![](demo/demo3.gif)
 
     2. `vim-sb-complete2`
 
     ![](demo/demo2.gif)
+    ![](demo/demo4.gif)
 
 ## Installation
 
