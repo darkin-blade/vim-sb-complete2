@@ -17,10 +17,10 @@ let g:sbcom2_wordnum = 0
 
 fun! sbcom2#isword()
   if (&filetype == "vim") " 特判vim格式,把#算进单词
-    let g:sbcom2_isword = ["[0-9a-zA-Z:_#]"]
+    let g:sbcom2_isword = "[0-9a-zA-Z:_#]"
     let g:sbcom2_issplit = ["`", "\\~", "!", "@", "\\$", "%", "\\^", "&", "*", "(", ")", "-", "=", "+", "[", "{", "]", "}", "\\", "|", ";", "\'", "\"", ",", "<", "\\.", ">", "/", "?", " ", "\t", "\n"]
   else
-    let g:sbcom2_isword = ["[0-9a-zA-Z:_]"]
+    let g:sbcom2_isword = "[0-9a-zA-Z:_]"
     let g:sbcom2_issplit = ["`", "\\~", "!", "@", "#", "\\$", "%", "\\^", "&", "*", "(", ")", "-", "=", "+", "[", "{", "]", "}", "\\", "|", ";", "\'", "\"", ",", "<", "\\.", ">", "/", "?", " ", "\t", "\n"]
   endif
 endfun
@@ -60,10 +60,11 @@ fun! sbcom2#find() " 主函数
   let theline = getline(line("."))
   let thehead = col(".") - 2
   let thetail = thehead
-  while ((sbcom2#match(theline[thehead], g:sbcom2_isword) == 1)&&(thehead >= 0))
+  let linelen = len(getline(line(".")))
+  while ((match(theline[thehead], g:sbcom2_isword) != -1)&&(thehead >= 0))
     let thehead -= 1
   endwhile
-  while ((sbcom2#match(theline[thetail], g:sbcom2_isword) == 1)&&(thetail <= len(getline(line(".")))))
+  while ((match(theline[thetail], g:sbcom2_isword) != -1)&&(thetail <= linelen))
     let thetail += 1
   endwhile
   let thehead += 1
@@ -76,41 +77,50 @@ fun! sbcom2#find() " 主函数
   endif
   let regular = sbcom2#insert(theword) " 正则表达式
   "==获取全文==
-  let linelen = len(getline(1, 2000))
-  let i = 1
+  let linenum = len(getline(1, 2000))
+  let lineup = line(".")
+  let linedown = line(".") + 1
   let g:sbcom2_alltext = ""
-  while (i <= linelen)
-    let g:sbcom2_alltext = g:sbcom2_alltext . getline(i) . " "
-    let i += 1
+  while ((lineup >= 1)||(linedown <= linenum)) " 按就近添加行
+    if (lineup >= 1)
+      let g:sbcom2_alltext = g:sbcom2_alltext . getline(lineup) . " "
+    endif
+    if (linedown <= linenum)
+      let g:sbcom2_alltext = g:sbcom2_alltext . getline(linedown) . " "
+    endif
+    let lineup -= 1
+    let linedown += 1
   endwhile
   "==分割单词==
-  let wordtemp = ""
-  let g:sbcom2_matched = []
+  let g:sbcom2_matched = [] " 清空之前匹配的单词
+  return []
   let textlen = len(g:sbcom2_alltext)
   let rightspell = 0
   let i = 0
+  let wordtemp = ""
   while (i < textlen)
     let thechar = g:sbcom2_alltext[i]
-    if (sbcom2#match(thechar, g:sbcom2_isword) == 1) " 是单词
-      let wordtemp = wordtemp . thechar
-    else " 非单词
-      if (sbcom2#exist(wordtemp, g:sbcom2_matched) == 1) " 已经存在
-        let wordtemp = ""
-        continue " 跳过
-      endif
-      if (match(wordtemp, regular) != 0) " 匹配成功
-        if (wordtemp == theword) " 等于当前单词
-          if (rightspell == 0) " 第一次匹配
-            let rightspell = 1 " 进行标记
-          else " 该单词是正确的单词
+    for j in ["j"]
+      if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
+        let wordtemp = wordtemp . thechar " 添加到单词
+      else " 非单词
+        if (sbcom2#exist(wordtemp, g:sbcom2_matched) == 1) " 已经存在
+          continue " 跳过
+        endif
+        if (match(wordtemp, regular) != 0) " 头部匹配成功
+          if (wordtemp == theword) " 等于当前单词
+            if (rightspell == 0) " 第一次匹配
+              let rightspell = 1 " 进行标记
+            else " 该单词是正确的单词
+              let g:sbcom2_matched += [wordtemp]
+            endif
+          else " 非当前单词
             let g:sbcom2_matched += [wordtemp]
           endif
-        else " 非当前单词
-          let g:sbcom2_matched += [wordtemp]
         endif
       endif
-      let wordtemp = ""
-    endif
+    endfor
+    let wordtemp = ""
     let i += 1
   endwhile
   return []
