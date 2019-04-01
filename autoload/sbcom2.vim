@@ -59,17 +59,17 @@ fun! sbcom2#find() " 主函数
   "==获取目前单词==
   call sbcom2#init() " 初始化单词和非单词
   let theline = getline(line("."))
-  let thehead = col(".") - 2
-  let thetail = thehead
+  let g:sbcom2_thehead = col(".") - 2
+  let g:sbcom2_thetail = g:sbcom2_thehead
   let linelen = len(getline(line(".")))
-  while ((match(theline[thehead], g:sbcom2_isword) != -1)&&(thehead >= 0))
-    let thehead -= 1
+  while ((match(theline[g:sbcom2_thehead], g:sbcom2_isword) != -1)&&(g:sbcom2_thehead >= 0))
+    let g:sbcom2_thehead -= 1
   endwhile
-  while ((match(theline[thetail], g:sbcom2_isword) != -1)&&(thetail <= linelen))
-    let thetail += 1
+  while ((match(theline[g:sbcom2_thetail], g:sbcom2_isword) != -1)&&(g:sbcom2_thetail <= linelen))
+    let g:sbcom2_thetail += 1
   endwhile
-  let thehead += 1
-  let thetail -= 1
+  let g:sbcom2_thehead += 1
+  let g:sbcom2_thetail -= 1
   let g:sbcom2_theword = theline[thehead:thetail]
   let g:sbcom2_thelen = len(g:sbcom2_theword)
   if (g:sbcom2_thelen == 0)
@@ -87,7 +87,20 @@ fun! sbcom2#find() " 主函数
     let g:sbcom2_fixed = []
     let g:sbcom2_spell = 0 " 判断当前单词是否有效
   endif
-  "==每次只加载上下两行==
+  "==对同一个单词进行加载==
+  if (len(g:sbcom2_theword) == 0)
+    call sbcom2#add(g:sbcom2_thetail)
+  elseif (g:sbcom2_theword == g:sbcom2_matched[g:sbcom2_wordnth])
+    call sbcom2#add(g:sbcom2_thetail)
+  elseif
+  "==判断是否开启更正模式==
+  if (len(g:sbcom2_matched) == 0)
+    let g:sbcom2_matched = g:sbcom2_fixed
+  endif
+  return []
+endfun
+
+fun! sbcom2#add()
   while (g:sbcom2_loaded == 0)
     if (g:sbcom2_up >= 1)
       let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_up)
@@ -100,19 +113,14 @@ fun! sbcom2#find() " 主函数
     if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
       let g:sbcom2_loaded = 1 " 全文加载完毕
     endif
-    if (sbcom2#match(thetail) == 1)
-      call sbcom2#replace(thetail) " 一旦找到匹配或者搜索完成就进行补全
+    if (sbcom2#match(g:sbcom2_thetail) == 1)
+      call sbcom2#replace(g:sbcom2_thetail) " 一旦找到匹配或者搜索完成就进行补全
       break
     endif
   endwhile
-  "==判断是否开启更正模式==
-  if (len(g:sbcom2_matched) == 0)
-    let g:sbcom2_matched = g:sbcom2_fixed
-  endif
-  return []
 endfun
 
-fun! sbcom2#match(thetail)
+fun! sbcom2#match()
   let wordtemp = ""
   let textlen = len(g:sbcom2_alltext)
   while (g:sbcom2_position < textlen)
@@ -149,7 +157,7 @@ fun! sbcom2#match(thetail)
   return 0
 endfun
 
-fun! sbcom2#replace(thetail)
-  call cursor([line("."), a:thetail + 2])
+fun! sbcom2#replace()
+  call cursor([line("."), g:sbcom2_thetail + 2])
   call complete(col(".") - g:sbcom2_thelen, [g:sbcom2_matched[g:sbcom2_wordnth]])
 endfun
