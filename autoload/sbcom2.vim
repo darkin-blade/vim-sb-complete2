@@ -53,13 +53,13 @@ fun! sbcom2#find() " 主函数
   endif
   "==实时加载==
   if (len(g:sbcom2_matched) == 0) " 新的单词
-    echom "restart!"
     call sbcom2#reset()
     call sbcom2#add()
   elseif (g:sbcom2_theword == g:sbcom2_matched[g:sbcom2_wordnth]) " 上一个单词
-    call sbcom2#add()
+    if (g:sbcom2_switch == 0)
+      call sbcom2#add()
+    endif
   else " 不同的单词
-    echom g:sbcom2_theword . " != " . g:sbcom2_matched[g:sbcom2_wordnth]
     call sbcom2#reset()
     call sbcom2#add()
   endif
@@ -67,8 +67,8 @@ fun! sbcom2#find() " 主函数
   if (g:sbcom2_switch == 0) " 仍有新的单词被找到
     return []
   else " 全文已经搜遍
-    echom "switch"
-    if (len(g:sbcom2_matched) != 0) " 不为空,切换单词
+    let g:sbcom2_wordnum = len(g:sbcom2_matched)
+    if (g:sbcom2_wordnum != 0) " 不为空,切换单词
       let g:sbcom2_wordnth += 1
       let g:sbcom2_wordnth = g:sbcom2_wordnth % g:sbcom2_wordnum " 循环
       call sbcom2#replace()
