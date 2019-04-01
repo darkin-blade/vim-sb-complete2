@@ -20,8 +20,10 @@ let g:sbcom2_wordnum = 0
 " let g:sbcom2_hasmatch = 0 
 " 实时位置
 " let g:sbcom2_textposition = 0
+" 是否正在搜索
+let g:sbcom2_loading = 0
 " 全文是否搜遍
-let g:sbcom2_findall = 0
+let g:sbcom2_loaded = 0
 
 fun! sbcom2#init()
   if (&filetype == "vim") " 特判vim格式,把#算进单词
@@ -55,7 +57,7 @@ endfun
 
 fun! sbcom2#find() " 主函数
   "==获取目前单词==
-  call sbcom2#init() " 初始化全局变量
+  call sbcom2#init() " 初始化单词和非单词
   let theline = getline(line("."))
   let thehead = col(".") - 2
   let thetail = thehead
@@ -75,6 +77,25 @@ fun! sbcom2#find() " 主函数
     return []
   endif
   let regular = sbcom2#regular(theword) " 正则表达式
+  "==实时加载==
+  if (g:sbcom2_loading == 0) " 第一次加载
+    let g:sbcom2_loading = 1
+    let g:sbcom2_up = line(".")
+    let g:sbcom2_down = line(".") + 1
+    let g:sbcom2_linenum = len(getline(0, 10000))
+  endif
+  "==loading == 1==
+  if (g:sbcom2_up >= 1)
+    let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_up)
+    let g:sbcom2_up -= 1
+  endif
+  if (g:sbcom2_down <= g:sbcom2_linenum)
+    let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_down)
+    let g:sbcom2_down += 1
+  endif
+  if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
+    let g:sbcom2_loaded = 1 " 全文加载完毕
+  endif
   return []
 endfun
 
