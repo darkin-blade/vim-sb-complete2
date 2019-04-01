@@ -4,7 +4,21 @@ the most lightweight(SHA BI) completion plug of vim
 
 ## Description
 
-- the same as `vim-sb-complete1`
+1. the function is the same as [vim-sb-complete1](https://github.com/NiaBie/vim-sb-complete1)
+
+2. much faster than `vim-sb-complete1`
+
+3. but not support for CJK
+
+- comparie with `vim-sb-complete1`
+
+    1. `vim-sb-complete1`
+
+    ![](demo/demo1.gif)
+
+    2. `vim-sb-complete2`
+
+    ![](demo/demo2.gif)
 
 ## Installation
 
