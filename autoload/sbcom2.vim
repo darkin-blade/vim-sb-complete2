@@ -88,7 +88,7 @@ fun! sbcom2#find() " 主函数
     let g:sbcom2_spell = 0 " 判断当前单词是否有效
   endif
   "==每次只加载上下两行==
-  while ((sbcom2#match(thetail) == 0)&&(g:sbcom2_loaded == 0))
+  while (g:sbcom2_loaded == 0)
     if (g:sbcom2_up >= 1)
       let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_up)
       let g:sbcom2_up -= 1
@@ -100,7 +100,15 @@ fun! sbcom2#find() " 主函数
     if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
       let g:sbcom2_loaded = 1 " 全文加载完毕
     endif
+    if (sbcom2#match(thetail) == 1)
+      call sbcom2#replace(thetail) " 一旦找到匹配或者搜索完成就进行补全
+      break
+    endif
   endwhile
+  "==判断是否开启更正模式==
+  if (len(g:sbcom2_matched) == 0)
+    let g:sbcom2_matched = g:sbcom2_fixed
+  endif
   return []
 endfun
 
