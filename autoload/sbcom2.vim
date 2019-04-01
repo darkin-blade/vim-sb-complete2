@@ -1,7 +1,11 @@
 " 全部单词
+let g:sbcom2_allword = []
+" 全文
 let g:sbcom2_alltext = []
 " 全部匹配的单词
 let g:sbcom2_matched = []
+" 临时修正的单词
+let g:sbcom2_fixed = []
 " 算进单词的部分,不包括中文字符
 let g:sbcom2_isword = []
 " 不算进单词的部分
@@ -52,7 +56,7 @@ endfun
 
 fun! sbcom2#find() " 主函数
   "==获取目前单词==
-  call sbcom2#isword()
+  call sbcom2#isword() " 初始化全局变量
   let theline = getline(line("."))
   let thehead = col(".") - 2
   let thetail = thehead
@@ -70,78 +74,28 @@ fun! sbcom2#find() " 主函数
     echom "invalid --sbcom2"
     return []
   endif
-  "==切换单词==
-  for i in g:sbcom2_matched " g:sbcom2_wordnum不能为0
-    if (i == theword) " 单词已经匹配过
-      let g:sbcom2_wordnth += 1
-      let g:sbcom2_wordnth = g:sbcom2_wordnth%g:sbcom2_wordnum " 循环
-      call sbcom2#replace(thelen, thetail)
-      return []
-    endif
-  endfor
-  let theregular = sbcom2#insert(theword)
-  "==获取全部单词==
-  let lineup = line(".")
-  let linedown = line(".") + 1
-  let g:sbcom2_alltext = []
-  let textlen = len(getline(0, 1000))
-  while ((lineup >= 1)||(linedown <= textlen)) " 按就近添加行
-    if (lineup >= 1)
-      let g:sbcom2_alltext += getline(lineup, lineup)
-    endif
-    if (linedown <= textlen)
-      let g:sbcom2_alltext += getline(linedown, linedown)
-    endif
-    let lineup -= 1
-    let linedown += 1
-    if (len(g:sbcom2_alltext) > g:sbcom2_maxline)
-      break
-    endif
+  let regular = sbcom2#insert(theword) " 正则表达式
+  "==获取全文==
+  let linetotal = len(getline(1, 2000))
+  let i = 1
+  let g:sbcom2_alltext = ""
+  while (i <= linetotal)
+    let g:sbcom2_alltext = g:sbcom2_alltext . getline(i)
+    let i += 1
   endwhile
-  let alltext_temp = g:sbcom2_alltext 
-  for j in g:sbcom2_issplit
-    let g:sbcom2_alltext = []
-    for i in alltext_temp
-      let g:sbcom2_alltext += split(i, j)
-    endfor  
-    let alltext_temp = g:sbcom2_alltext  
-  endfor 
-  "==单词去重==
-  let alltext_temp = g:sbcom2_alltext
-  let g:sbcom2_alltext = []
-  let rightspell = -1 " 如果为1,说明是正确的单词
-  for i in alltext_temp
-    if (i == theword) " 相同单词
-      let rightspell += 1
-      continue
-    endif
-    if (sbcom2#exist(i, g:sbcom2_alltext))
-      continue
-    endif
-    let g:sbcom2_alltext += [i]
-  endfor
-  "==单词匹配==
-  let g:sbcom2_wordnth = 0
-  let g:sbcom2_wordnum = 0
-  let g:sbcom2_matched = [] " 匹配的单词组成的list,清空
+  "==分割单词==
+  let wordtemp = ""
+  let g:sbcom2_allword = []
   for i in g:sbcom2_alltext
-    if (match(i, theregular) == 0) " 找到正则匹配
-      if (theword == i) " 相同单词
-        continue
+    if (sbcom2#exist(i, g:sbcom2_isword) == 1)
+      let wordtemp = wordtemp . i
+    else
+      if (match(wordtemp, regular) != -1)
+        let g:sbcom2_matched += [wordtemp]
       endif
-      call add(g:sbcom2_matched, i)
+      let wordtemp = ""
     endif
   endfor
-  if (rightspell >= 1) " 目前的单词是有效的
-    call add(g:sbcom2_matched, theword)
-  endif
-  let g:sbcom2_wordnum = len(g:sbcom2_matched)
-  if (g:sbcom2_wordnum == 0)
-    call sbcom2#fix(theword, thelen, thetail)
-  else
-    call sbcom2#replace(thelen, thetail)
-  endif
-  return ""
 endfun
 
 fun! sbcom2#replace(thelen, thetail)
