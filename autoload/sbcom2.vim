@@ -104,11 +104,6 @@ fun! sbcom2#find() " 主函数
   return []
 endfun
 
-fun! sbcom2#replace(thetail)
-  call cursor([line("."), a:thetail + 2])
-  call complete(col(".") - g:sbcom2_thelen, [g:sbcom2_matched[g:sbcom2_wordnth]])
-endfun
-
 fun! sbcom2#match(thetail)
   let wordtemp = ""
   let textlen = len(g:sbcom2_alltext)
@@ -116,15 +111,16 @@ fun! sbcom2#match(thetail)
     let thechar = g:sbcom2_alltext[g:sbcom2_position] " 按字符匹配
     if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
       let wordtemp = wordtemp . thechar
-    else
+    else " 非单词字符,清空单词
       if ((match(wordtemp, g:sbcom2_regular) == 0)&&(sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)) " 匹配成功且不重复
         if ((wordtemp != g:sbcom2_theword)||(g:sbcom2_spell == 1)) " 非当前单词,或拼写正确
           let g:sbcom2_matched += [wordtemp]
-          let g:sbcom2_canmatch = 1 " 能够正常匹配
+          let g:sbcom2_wordnth += 1
+          return 1
         else
           let g:sbcom2_spell = 1 " 进行记录
         endif
-      elseif ((g:sbcom2_canmatch == 0)&&(sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)) " 暂未匹配成功且不重复
+      elseif ((sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)&&(g:sbcom2_linenum <= 300)) " 暂未匹配成功且不重复
         let canfix = 1
         let i = 0
         while (i < g:sbcom2_thelen)
@@ -138,9 +134,14 @@ fun! sbcom2#match(thetail)
           let g:sbcom2_fixed += [wordtemp]
         endif
       endif
-      let g:sbcom2_position += 1
+      let wordtemp = ""
     endif
+    let g:sbcom2_position += 1
   endwhile
   return 0
-  return 1
+endfun
+
+fun! sbcom2#replace(thetail)
+  call cursor([line("."), a:thetail + 2])
+  call complete(col(".") - g:sbcom2_thelen, [g:sbcom2_matched[g:sbcom2_wordnth]])
 endfun
