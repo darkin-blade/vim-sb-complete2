@@ -93,37 +93,28 @@ fun! sbcom2#find() " 主函数
   endwhile
   "==分割单词==
   let g:sbcom2_matched = [] " 清空之前匹配的单词
-  return []
   let textlen = len(g:sbcom2_alltext)
   let rightspell = 0
   let i = 0
   let wordtemp = ""
   while (i < textlen)
     let thechar = g:sbcom2_alltext[i]
-    for j in ["j"]
-      if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
-        let wordtemp = wordtemp . thechar " 添加到单词
-      else " 非单词
-        if (sbcom2#exist(wordtemp, g:sbcom2_matched) == 1) " 已经存在
-          continue " 跳过
-        endif
-        if (wordtemp == "") " 单词为空
-          continue " 跳过
-        endif
-        if (match(wordtemp, regular) == 0) " 头部匹配成功
-          if (wordtemp == theword) " 等于当前单词
-            if (rightspell == 0) " 第一次匹配
-              let rightspell = 1 " 进行标记
-            else " 该单词是正确的单词
-              let g:sbcom2_matched += [wordtemp]
-            endif
-          else " 非当前单词
+    if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
+      let wordtemp = wordtemp . thechar " 添加到单词
+    else
+      if ((sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)&&(match(wordtemp, regular) == 0)) " 没重复,匹配成功
+        if (wordtemp != theword) " 非当前单词
+          let g:sbcom2_matched += [wordtemp]
+        else " 等于当前单词
+          if (rightspell == 0) " 第一次匹配
+            let rightspell = 1 " 进行标记
+          else " 该单词是正确的单词
             let g:sbcom2_matched += [wordtemp]
           endif
         endif
       endif
-    endfor
-    let wordtemp = ""
+      let wordtemp = ""
+    endif
     let i += 1
   endwhile
   return []
