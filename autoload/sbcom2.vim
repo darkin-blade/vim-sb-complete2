@@ -13,7 +13,7 @@ let g:sbcom2_wordnth = 0
 " 总共匹配数
 let g:sbcom2_wordnum = 0
 " 判断当前单词是否有效
-" let g:sbcom2_rightspell = 0 
+" let g:sbcom2_spell = 0 
 " 判断是否能够进行正常匹配
 " let g:sbcom2_canmatch = 0 
 " 判断是否已经进行超前匹配
@@ -76,9 +76,9 @@ fun! sbcom2#find() " 主函数
     echom "invalid --sbcom2"
     return []
   endif
-  let regular = sbcom2#regular(g:sbcom2_theword) " 正则表达式
   "==实时加载==
   if (g:sbcom2_loading == 0) " 第一次加载
+    let g:sbcom2_regular = sbcom2#regular(g:sbcom2_theword) " 正则表达式
     let g:sbcom2_loading = 1
     let g:sbcom2_up = line(".")
     let g:sbcom2_down = line(".") + 1
@@ -115,9 +115,30 @@ fun! sbcom2#match(thetail)
   while (g:sbcom2_position < textlen)
     let thechar = g:sbcom2_alltext[g:sbcom2_position] " 按字符匹配
     if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
-      if
-      else
+      let wordtemp = wordtemp . thechar
+    else
+      if ((match(wordtemp, g:sbcom2_regular) == 0)&&(sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)) " 匹配成功且不重复
+        if ((wordtemp != g:sbcom2_theword)||(g:sbcom2_spell == 1)) " 非当前单词,或拼写正确
+          let g:sbcom2_matched += [wordtemp]
+          let g:sbcom2_canmatch = 1 " 能够正常匹配
+        else
+          let g:sbcom2_spell = 1 " 进行记录
+        endif
+      elseif ((g:sbcom2_canmatch == 0)&&(sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)) " 暂未匹配成功且不重复
+        let canfix = 1
+        let i = 0
+        while (i < g:sbcom2_thelen)
+          if (match(wordtemp, g:sbcom2_theword[i]) == -1) " 更正失败
+            let canfix = 0
+            break
+          endif
+          let i += 1
+        endwhile
+        if (canfix == 1) " 可以更正
+          let g:sbcom2_fixed += [wordtemp]
+        endif
       endif
+      let g:sbcom2_position += 1
     endif
   endwhile
   return 0
