@@ -4,7 +4,6 @@ if (exists('g:sbcom2_active')&&(g:sbcom2_active != 0)) " 启动插件
   else " 没有自定义按键
     au BufEnter * execute("inoremap <tab> <c-r>=sbcom2#find()<cr>")
   endif
-  au BufEnter * call sbcom2#isword()
   if (!exists('g:sbcom2_maxline')) " 有自定义最大长度
     let g:sbcom2_maxline = 2000
   endif
