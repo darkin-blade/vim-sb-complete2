@@ -110,6 +110,7 @@ fun! sbcom2#find() " 主函数
   let rightspell = 0
   let i = 0
   let canmatch = 0
+  let hasmatched = 0
   let wordtemp = ""
   while (i < textlen)
     let thechar = g:sbcom2_alltext[i]
@@ -142,6 +143,11 @@ fun! sbcom2#find() " 主函数
           let g:sbcom2_fixed += [wordtemp]
         endif
       endif
+      if ((canmatch == 1)&&(hasmatched == 0))
+        let hasmatched = 1
+        let g:sbcom2_wordnth = 0
+        call sbcom2#replace(thelen, thetail)
+      endif
       let wordtemp = ""
     endif
     let i += 1
@@ -150,10 +156,7 @@ fun! sbcom2#find() " 主函数
     let g:sbcom2_matched = g:sbcom2_fixed
   endif
   let g:sbcom2_wordnum = len(g:sbcom2_matched)
-  let g:sbcom2_wordnth = 0
-  if (g:sbcom2_wordnum == 0)
-    call sbcom2#fix(theword, thelen, thetail)
-  else
+  if (hasmatched == 0)
     call sbcom2#replace(thelen, thetail)
   endif
   return []
