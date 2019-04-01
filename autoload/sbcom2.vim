@@ -97,6 +97,9 @@ fun! sbcom2#find() " 主函数
     if (linedown <= linenum)
       let g:sbcom2_alltext = g:sbcom2_alltext . getline(linedown) . " "
     endif
+    if (linedown - lineup > g:sbcom2_maxline)
+      break
+    endif
     let lineup -= 1
     let linedown += 1
   endwhile
