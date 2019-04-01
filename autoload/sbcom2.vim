@@ -70,38 +70,46 @@ fun! sbcom2#find() " 主函数
   endwhile
   let thehead += 1
   let thetail -= 1
-  let theword = theline[thehead:thetail]
-  let thelen = len(theword)
-  if (thelen == 0)
+  let g:sbcom2_theword = theline[thehead:thetail]
+  let g:sbcom2_thelen = len(g:sbcom2_theword)
+  if (g:sbcom2_thelen == 0)
     echom "invalid --sbcom2"
     return []
   endif
-  let regular = sbcom2#regular(theword) " 正则表达式
+  let regular = sbcom2#regular(g:sbcom2_theword) " 正则表达式
   "==实时加载==
   if (g:sbcom2_loading == 0) " 第一次加载
     let g:sbcom2_loading = 1
     let g:sbcom2_up = line(".")
     let g:sbcom2_down = line(".") + 1
     let g:sbcom2_linenum = len(getline(0, 10000))
+    let g:sbcom2_matched = []
+    let g:sbcom2_fixed = []
+    let g:sbcom2_spell = 0 " 判断当前单词是否有效
   endif
-  "==loading == 1==
-  if (g:sbcom2_up >= 1)
-    let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_up)
-    let g:sbcom2_up -= 1
-  endif
-  if (g:sbcom2_down <= g:sbcom2_linenum)
-    let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_down)
-    let g:sbcom2_down += 1
-  endif
-  if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
-    let g:sbcom2_loaded = 1 " 全文加载完毕
-  endif
+  "==每次只加载上下两行==
+  while ((sbcom2#match(thetail) == 0)&&(g:sbcom2_loaded == 0))
+    if (g:sbcom2_up >= 1)
+      let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_up)
+      let g:sbcom2_up -= 1
+    endif
+    if (g:sbcom2_down <= g:sbcom2_linenum)
+      let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_down)
+      let g:sbcom2_down += 1
+    endif
+    if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
+      let g:sbcom2_loaded = 1 " 全文加载完毕
+    endif
+  endwhile
   return []
 endfun
 
-fun! sbcom2#replace(thelen, thetail)
+fun! sbcom2#replace(thetail)
   call cursor([line("."), a:thetail + 2])
-  call complete(col(".") - a:thelen, [g:sbcom2_matched[g:sbcom2_wordnth]])
-  echom "match"
+  call complete(col(".") - g:sbcom2_thelen, [g:sbcom2_matched[g:sbcom2_wordnth]])
 endfun
 
+fun! sbcom2#match(thetail)
+  return 0
+  return 1
+endfun
