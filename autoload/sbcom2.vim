@@ -1,3 +1,5 @@
+let g:sbcom2_matched = []
+
 fun! sbcom2#init()
   if (&filetype == "vim") " 特判vim格式,把#算进单词
     let g:sbcom2_isword = "[0-9a-zA-Z:_#]"
@@ -43,25 +45,34 @@ fun! sbcom2#find() " 主函数
   endwhile
   let g:sbcom2_thehead += 1
   let g:sbcom2_thetail -= 1
-  let g:sbcom2_theword = theline[thehead:thetail]
+  let g:sbcom2_theword = theline[g:sbcom2_thehead : g:sbcom2_thetail]
   let g:sbcom2_thelen = len(g:sbcom2_theword)
   if (g:sbcom2_thelen == 0)
     echom "invalid --sbcom2"
     return []
   endif
   "==实时加载==
-  if (len(g:sbcom2_theword) == 0) " 新的单词
+  if (len(g:sbcom2_matched) == 0) " 新的单词
+    echom "restart!"
     call sbcom2#reset()
     call sbcom2#add()
   elseif (g:sbcom2_theword == g:sbcom2_matched[g:sbcom2_wordnth]) " 上一个单词
     call sbcom2#add()
   else " 不同的单词
+    echom g:sbcom2_theword . " != " . g:sbcom2_matched[g:sbcom2_wordnth]
     call sbcom2#reset()
     call sbcom2#add()
   endif
   "==判断是否开启更正模式==
-  if (len(g:sbcom2_matched) == 0)
-    let g:sbcom2_matched = g:sbcom2_fixed
+  if (g:sbcom2_switch == 0) " 仍有新的单词被找到
+    return []
+  else " 全文已经搜遍
+    echom "switch"
+    if (len(g:sbcom2_matched) != 0) " 不为空,切换单词
+      let g:sbcom2_wordnth += 1
+      let g:sbcom2_wordnth = g:sbcom2_wordnth % g:sbcom2_wordnum " 循环
+      call sbcom2#replace()
+    endif
   endif
   return []
 endfun
@@ -69,11 +80,11 @@ endfun
 fun! sbcom2#add()
   while (g:sbcom2_loaded == 0)
     if (g:sbcom2_up >= 1)
-      let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_up)
+      let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_up) . " "
       let g:sbcom2_up -= 1
     endif
     if (g:sbcom2_down <= g:sbcom2_linenum)
-      let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_down)
+      let g:sbcom2_alltext = g:sbcom2_alltext . getline(g:sbcom2_down) . " "
       let g:sbcom2_down += 1
     endif
     if (sbcom2#match() == 1)
@@ -85,6 +96,9 @@ fun! sbcom2#add()
     endif
   endwhile
   let g:sbcom2_switch = 1 " 开启轮换
+  if (len(g:sbcom2_matched) == 0) " 没有正常匹配
+    let g:sbcom2_matched = g:sbcom2_fixed " 开启更正模式
+  endif
   return 0
 endfun
 
@@ -97,12 +111,10 @@ fun! sbcom2#match()
       let wordtemp = wordtemp . thechar
     else " 非单词字符,清空单词
       if ((match(wordtemp, g:sbcom2_regular) == 0)&&(sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)) " 匹配成功且不重复
-        if ((wordtemp != g:sbcom2_theword)||(g:sbcom2_spell == 1)) " 非当前单词,或拼写正确
+        if (wordtemp != g:sbcom2_theword) " 非当前单词,或拼写正确
           let g:sbcom2_matched += [wordtemp]
           let g:sbcom2_wordnth += 1
           return 1
-        else
-          let g:sbcom2_spell = 1 " 进行记录
         endif
       elseif ((sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)&&(g:sbcom2_linenum <= 300)) " 暂未匹配成功且不重复
         let canfix = 1
@@ -131,15 +143,18 @@ fun! sbcom2#replace()
 endfun
 
 fun! sbcom2#reset()
+  let g:sbcom2_alltext = ""
+  let g:sbcom2_position = 0
   let g:sbcom2_regular = sbcom2#regular(g:sbcom2_theword) " 正则表达式
   let g:sbcom2_up = line(".")
   let g:sbcom2_down = line(".") + 1
   let g:sbcom2_linenum = len(getline(0, 10000))
   let g:sbcom2_matched = []
   let g:sbcom2_fixed = []
-  let g:sbcom2_spell = 0 " 判断当前单词是否有效
-  let g:sbcom2_wordnth = 0 " 下一个切换的单词
+  " let g:sbcom2_spell = 0 " 判断当前单词是否有效
+  let g:sbcom2_wordnth = -1 " 下一个切换的单词
   let g:sbcom2_wordnum = 0 " 总共匹配数
   let g:sbcom2_switch = 0 " 全文是否搜遍
   let g:sbcom2_loaded = 0 " 是否搜到头
 endfun
+
