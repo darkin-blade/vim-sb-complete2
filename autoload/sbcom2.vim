@@ -19,7 +19,7 @@ let g:sbcom2_wordnum = 0
 " 判断是否已经进行超前匹配
 " let g:sbcom2_hasmatch = 0 
 " 实时位置
-" let g:sbcom2_textposition = 0
+" let g:sbcom2_position = 0
 " 是否正在搜索
 let g:sbcom2_loading = 0
 " 全文是否搜遍
@@ -110,6 +110,16 @@ fun! sbcom2#replace(thetail)
 endfun
 
 fun! sbcom2#match(thetail)
+  let wordtemp = ""
+  let textlen = len(g:sbcom2_alltext)
+  while (g:sbcom2_position < textlen)
+    let thechar = g:sbcom2_alltext[g:sbcom2_position] " 按字符匹配
+    if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
+      if
+      else
+      endif
+    endif
+  endwhile
   return 0
   return 1
 endfun
