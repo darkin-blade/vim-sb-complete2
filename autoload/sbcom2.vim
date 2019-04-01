@@ -76,6 +76,15 @@ fun! sbcom2#find() " 主函数
     return []
   endif
   let regular = sbcom2#insert(theword) " 正则表达式
+  "==切换单词==
+  for i in g:sbcom2_matched
+    if (i == theword)
+      let g:sbcom2_wordnth += 1
+      let g:sbcom2_wordnth = g:sbcom2_wordnth % g:sbcom2_wordnum " 循环
+      call sbcom2#replace(thelen, thetail)
+      return []
+    endif
+  endfor
   "==获取全文==
   let linenum = len(getline(1, 2000))
   let lineup = line(".")
@@ -104,7 +113,7 @@ fun! sbcom2#find() " 主函数
     if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
       let wordtemp = wordtemp . thechar " 添加到单词
     else
-      if ((sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)&&(match(wordtemp, regular) == 0)) " 没重复,匹配成功
+      if ((sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)&&(match(wordtemp, regular) == 0)) " 没重复,匹配成功,普通模式
         if (wordtemp != theword) " 非当前单词
           let canmatch = 1
           let g:sbcom2_matched += [wordtemp]
@@ -134,42 +143,20 @@ fun! sbcom2#find() " 主函数
     endif
     let i += 1
   endwhile
-  if (len(g:sbcom2_matched) == 0)
+  if (len(g:sbcom2_matched) == 0) " 开启更正模式
     let g:sbcom2_matched = g:sbcom2_fixed
   endif
+  let g:sbcom2_wordnum = len(g:sbcom2_matched)
+  let g:sbcom2_wordnth = 0
+  if (g:sbcom2_wordnum == 0)
+    call sbcom2#fix(theword, thelen, thetail)
+  else
+    call sbcom2#replace(thelen, thetail)
   return []
 endfun
 
 fun! sbcom2#replace(thelen, thetail)
   call cursor([line("."), a:thetail + 2])
   call complete(col(".") - a:thelen, [g:sbcom2_matched[g:sbcom2_wordnth]])
-endfun
-
-fun! sbcom2#fix(theword, thelen, thetail)
-  for i in g:sbcom2_alltext
-    let allin = 1 " 是否有匹配的flag
-    let j = 0
-    while j < len(a:theword)
-      if (match(i, a:theword[j]) == -1) " 比较所有字母是否存在于另一个单词中
-        let allin = 0 " 匹配失败
-        break
-      endif
-      let j += 1
-    endwhile
-    if ((allin == 1)&&(i != a:theword))
-      if (len(g:sbcom2_matched) == 0) " 第一个匹配
-        let g:sbcom2_matched = [i]
-        let g:sbcom2_wordnum = 1
-      else
-        if (i != g:sbcom2_matched[len(g:sbcom2_matched) - 1]) " 后面的匹配
-          let g:sbcom2_matched += [i]
-          let g:sbcom2_wordnum += 1
-        endif
-      endif
-    endif
-  endfor
-  if (len(g:sbcom2_matched)!= 0)
-    call sbcom2#replace(a:thelen, a:thetail) " 再次调用删除,插入函数
-  endif
 endfun
 
