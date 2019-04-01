@@ -14,6 +14,14 @@ let g:sbcom2_issplit = ""
 let g:sbcom2_wordnth = 0
 " 总共匹配数
 let g:sbcom2_wordnum = 0
+" 判断当前单词是否有效
+let g:sbcom2_rightspell = 0 
+" 判断是否能够进行正常匹配
+let g:sbcom2_canmatch = 0 
+" 判断是否已经进行超前匹配
+let g:sbcom2_hasmatch = 0 
+" 实时位置
+let g:sbcom2_textposition = 0
 
 fun! sbcom2#isword()
   if (&filetype == "vim") " 特判vim格式,把#算进单词
@@ -86,9 +94,10 @@ fun! sbcom2#find() " 主函数
     endif
   endfor
   "==特殊变量==
-  let rightspell = 0 " 判断当前单词是否有效
-  let canmatch = 0 " 判断是否能够进行正常匹配
-  let hasmatched = 0 " 判断是否已经进行超前匹配
+  let g:sbcom2_textposition = 0 " 全文实时位置
+  let g:sbcom2_rightspell = 0 " 判断当前单词是否有效
+  let g:sbcom2_canmatch = 0 " 判断是否能够进行正常匹配
+  let g:sbcom2_hasmatch = 0 " 判断是否已经进行超前匹配
   let g:sbcom2_matched = [] " 清空之前匹配的单词
   let g:sbcom2_fixed = [] " 清空之前匹配的单词
   let g:sbcom2_alltext = ""
@@ -106,6 +115,7 @@ fun! sbcom2#find() " 主函数
     if (linedown - lineup > g:sbcom2_maxline) " 行数上限
       break
     endif
+    call sbcom2#realtime(thelen, theword, regular, thetail)
     let lineup -= 1
     let linedown += 1
   endwhile
@@ -114,38 +124,37 @@ fun! sbcom2#find() " 主函数
     let g:sbcom2_matched = g:sbcom2_fixed
   endif
   let g:sbcom2_wordnum = len(g:sbcom2_matched)
-  if ((hasmatched == 0)&&(len(g:sbcom2_matched) != 0))
+  if ((g:sbcom2_hasmatch == 0)&&(len(g:sbcom2_matched) != 0))
     call sbcom2#replace(thelen, thetail)
   endif
   return []
 endfun
 
 fun! sbcom2#realtime(thelen, theword, regular, thetail)
-  let textlen = len(g:sbcom2_alltext)
-  let i = 0
+  let textlen = len(g:sbcom2_alltext) " 实时的全文长度
   let wordtemp = ""
-  while (i < textlen)
-    let thechar = g:sbcom2_alltext[i]
+  while (g:sbcom2_textposition < textlen)
+    let thechar = g:sbcom2_alltext[g:sbcom2_textposition]
     if (match(thechar, g:sbcom2_isword) != -1) " 是单词字符
       let wordtemp = wordtemp . thechar " 添加到单词
     else
-      if ((sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)&&(match(wordtemp, regular) == 0)) " 没重复,匹配成功,普通模式
-        if (wordtemp != theword) " 非当前单词
-          let canmatch = 1
+      if ((sbcom2#exist(wordtemp, g:sbcom2_matched) == 0)&&(match(wordtemp, a:regular) == 0)) " 没重复,匹配成功,普通模式
+        if (wordtemp != a:theword) " 非当前单词
+          let g:sbcom2_canmatch = 1
           let g:sbcom2_matched += [wordtemp]
         else " 等于当前单词
-          if (rightspell == 0) " 第一次匹配
-            let rightspell = 1 " 进行标记
+          if (g:sbcom2_rightspell == 0) " 第一次匹配
+            let g:sbcom2_rightspell = 1 " 进行标记
           else " 该单词是正确的单词
-            let canmatch = 1
+            let g:sbcom2_canmatch = 1
             let g:sbcom2_matched += [wordtemp]
           endif
         endif
-      elseif ((sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)&&(canmatch == 0)) " 开启修正(正常匹配为空时才能触发)
+      elseif ((sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)&&(g:sbcom2_canmatch == 0)) " 开启修正(正常匹配为空时才能触发)
         let canfix = 1
         let j = 0
-        while (j < thelen)
-          if (match(wordtemp, theword[j]) == -1)
+        while (j < a:thelen)
+          if (match(wordtemp, a:theword[j]) == -1)
             let canfix = 0
             break " 更正失败
           endif
@@ -155,14 +164,14 @@ fun! sbcom2#realtime(thelen, theword, regular, thetail)
           let g:sbcom2_fixed += [wordtemp]
         endif
       endif
-      if ((canmatch == 1)&&(hasmatched == 0))
-        let hasmatched = 1
+      if ((g:sbcom2_canmatch == 1)&&(g:sbcom2_hasmatch == 0)) " 超前匹配
+        let g:sbcom2_hasmatch = 1
         let g:sbcom2_wordnth = 0
-        call sbcom2#replace(thelen, thetail)
+        call sbcom2#replace(a:thelen, a:thetail)
       endif
       let wordtemp = ""
     endif
-    let i += 1
+    let g:sbcom2_textposition += 1
   endwhile
 endfun
 
