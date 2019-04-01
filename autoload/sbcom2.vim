@@ -85,11 +85,17 @@ fun! sbcom2#find() " 主函数
       return []
     endif
   endfor
-  "==获取全文==
-  let linenum = len(getline(1, 2000))
-  let lineup = line(".")
-  let linedown = line(".") + 1
+  "==特殊变量==
+  let rightspell = 0 " 判断当前单词是否有效
+  let canmatch = 0 " 判断是否能够进行正常匹配
+  let hasmatched = 0 " 判断是否已经进行超前匹配
+  let g:sbcom2_matched = [] " 清空之前匹配的单词
+  let g:sbcom2_fixed = [] " 清空之前匹配的单词
   let g:sbcom2_alltext = ""
+  "==获取全文==
+  let linenum = len(getline(1, 2000)) " 全文长度
+  let lineup = line(".") " 向上增加行数
+  let linedown = line(".") + 1 " 向下增加行数
   while ((lineup >= 1)||(linedown <= linenum)) " 按就近添加行
     if (lineup >= 1)
       let g:sbcom2_alltext = g:sbcom2_alltext . getline(lineup) . " "
@@ -97,20 +103,26 @@ fun! sbcom2#find() " 主函数
     if (linedown <= linenum)
       let g:sbcom2_alltext = g:sbcom2_alltext . getline(linedown) . " "
     endif
-    if (linedown - lineup > g:sbcom2_maxline)
+    if (linedown - lineup > g:sbcom2_maxline) " 行数上限
       break
     endif
     let lineup -= 1
     let linedown += 1
   endwhile
-  "==分割单词==
-  let g:sbcom2_matched = [] " 清空之前匹配的单词
-  let g:sbcom2_fixed = [] " 清空之前匹配的单词
+  "==更正模式==
+  if (len(g:sbcom2_matched) == 0) " 开启更正模式
+    let g:sbcom2_matched = g:sbcom2_fixed
+  endif
+  let g:sbcom2_wordnum = len(g:sbcom2_matched)
+  if ((hasmatched == 0)&&(len(g:sbcom2_matched) != 0))
+    call sbcom2#replace(thelen, thetail)
+  endif
+  return []
+endfun
+
+fun! sbcom2#realtime(thelen, theword, regular, thetail)
   let textlen = len(g:sbcom2_alltext)
-  let rightspell = 0
   let i = 0
-  let canmatch = 0
-  let hasmatched = 0
   let wordtemp = ""
   while (i < textlen)
     let thechar = g:sbcom2_alltext[i]
@@ -152,14 +164,6 @@ fun! sbcom2#find() " 主函数
     endif
     let i += 1
   endwhile
-  if (len(g:sbcom2_matched) == 0) " 开启更正模式
-    let g:sbcom2_matched = g:sbcom2_fixed
-  endif
-  let g:sbcom2_wordnum = len(g:sbcom2_matched)
-  if (hasmatched == 0)
-    call sbcom2#replace(thelen, thetail)
-  endif
-  return []
 endfun
 
 fun! sbcom2#replace(thelen, thetail)
