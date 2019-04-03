@@ -91,7 +91,7 @@ fun! sbcom2#add()
       call sbcom2#replace() " 一旦找到匹配或者搜索完成就进行补全
       return 1
     endif
-    if ((g:sbcom2_up <= 1)&&(g:sbcom2_down >= g:sbcom2_linenum))
+    if ((g:sbcom2_up < 1)&&(g:sbcom2_down > g:sbcom2_linenum))
       let g:sbcom2_loaded = 1 " 全文加载完毕
     endif
   endwhile
