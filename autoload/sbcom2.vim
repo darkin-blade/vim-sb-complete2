@@ -59,7 +59,7 @@ fun! sbcom2#find() " 主函数
     if (g:sbcom2_switch == 0)
       call sbcom2#add()
     endif
-  else " 不同的单词
+  else " 不同的单词,重新加载目前单词
     call sbcom2#reset()
     call sbcom2#add()
   endif
@@ -72,6 +72,8 @@ fun! sbcom2#find() " 主函数
       let g:sbcom2_wordnth += 1
       let g:sbcom2_wordnth = g:sbcom2_wordnth % g:sbcom2_wordnum " 循环
       call sbcom2#replace()
+    else
+      echom "debug"
     endif
   endif
   return []
@@ -118,7 +120,7 @@ fun! sbcom2#match()
         else
           let g:sbcom2_spell = 1
         endif
-      elseif ((sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)&&(g:sbcom2_linenum <= 300)) " 暂未匹配成功且不重复
+      elseif ((sbcom2#exist(wordtemp, g:sbcom2_fixed) == 0)&&((g:sbcom2_down - g:sbcom2_up) <= 300)) " 暂未匹配成功且不重复
         let canfix = 1
         let i = 0
         while (i < g:sbcom2_thelen)
