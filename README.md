@@ -4,7 +4,7 @@ the most lightweight(SHA BI) completion plug of vim
 
 ## Description
 
-1. the function is the same as [vim-sb-complete1](https://github.com/NiaBie/vim-sb-complete1)
+1. the function is the same as [vim-sb-complete1](https://github.com/darkin-blade/vim-sb-complete1)
 
 2. much faster than `vim-sb-complete1`
 
